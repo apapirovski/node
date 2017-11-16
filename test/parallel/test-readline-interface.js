@@ -37,8 +37,7 @@ class FakeInput extends EventEmitter {
 }
 
 function isWarned(emitter) {
-  for (const name in emitter) {
-    const listeners = emitter[name];
+  for (const [, listeners] of emitter) {
     if (listeners.warned) return true;
   }
   return false;

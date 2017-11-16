@@ -170,11 +170,11 @@ common.expectsError(() => {
   assert.deepStrictEqual(ee.listeners('foo'), [listener1, listener2]);
 
   ee.removeListener('foo', listener1);
-  assert.strictEqual(ee._events.foo, listener2);
+  assert.strictEqual(ee._events.get('foo'), listener2);
 
   ee.on('foo', listener1);
   assert.deepStrictEqual(ee.listeners('foo'), [listener2, listener1]);
 
   ee.removeListener('foo', listener1);
-  assert.strictEqual(ee._events.foo, listener2);
+  assert.strictEqual(ee._events.get('foo'), listener2);
 }

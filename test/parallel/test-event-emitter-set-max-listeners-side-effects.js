@@ -26,7 +26,7 @@ const events = require('events');
 
 const e = new events.EventEmitter();
 
-assert(!(e._events instanceof Object));
-assert.deepStrictEqual(Object.keys(e._events), []);
+assert(e._events instanceof Map);
+assert.deepStrictEqual([...e._events.keys()], []);
 e.setMaxListeners(5);
-assert.deepStrictEqual(Object.keys(e._events), []);
+assert.deepStrictEqual([...e._events.keys()], []);

@@ -151,6 +151,7 @@ using v8::Integer;
 using v8::Isolate;
 using v8::Local;
 using v8::Locker;
+using v8::Map;
 using v8::MaybeLocal;
 using v8::Message;
 using v8::Name;
@@ -781,28 +782,6 @@ void* ArrayBufferAllocator::Allocate(size_t size) {
 
 namespace {
 
-bool DomainHasErrorHandler(const Environment* env,
-                           const Local<Object>& domain) {
-  HandleScope scope(env->isolate());
-
-  Local<Value> domain_event_listeners_v = domain->Get(env->events_string());
-  if (!domain_event_listeners_v->IsObject())
-    return false;
-
-  Local<Object> domain_event_listeners_o =
-      domain_event_listeners_v.As<Object>();
-
-  Local<Value> domain_error_listeners_v =
-      domain_event_listeners_o->Get(env->error_string());
-
-  if (domain_error_listeners_v->IsFunction() ||
-      (domain_error_listeners_v->IsArray() &&
-      domain_error_listeners_v.As<Array>()->Length() > 0))
-    return true;
-
-  return false;
-}
-
 bool DomainsStackHasErrorHandler(const Environment* env) {
   HandleScope scope(env->isolate());
 
@@ -820,7 +799,17 @@ bool DomainsStackHasErrorHandler(const Environment* env) {
       return false;
 
     Local<Object> domain = domain_v.As<Object>();
-    if (DomainHasErrorHandler(env, domain))
+
+    Local<Value> events = domain->Get(
+        env->context(), env->events_string()).ToLocalChecked();
+    if (events->IsUndefined())
+      continue;
+
+    Local<Value> has_error_handler = events.As<Object>()->Get(
+        env->context(), OneByteString(env->isolate(),
+                                      "_hasErrorListener")).ToLocalChecked();
+
+    if (has_error_handler->BooleanValue())
       return true;
   }
 
@@ -2480,11 +2469,10 @@ void ClearFatalExceptionHandlers(Environment* env) {
   Local<Value> events =
       process->Get(env->context(), env->events_string()).ToLocalChecked();
 
-  if (events->IsObject()) {
-    events.As<Object>()->Set(
+  if (events->IsMap()) {
+    events.As<Map>()->Delete(
         env->context(),
-        OneByteString(env->isolate(), "uncaughtException"),
-        Undefined(env->isolate())).FromJust();
+        OneByteString(env->isolate(), "uncaughtException")).FromJust();
   }
 
   process->Set(
@@ -3393,10 +3381,8 @@ void SetupProcessObject(Environment* env,
   env->SetMethod(process, "_setupDomainUse", SetupDomainUse);
 
   // pre-set _events object for faster emit checks
-  Local<Object> events_obj = Object::New(env->isolate());
-  CHECK(events_obj->SetPrototype(env->context(),
-                                 Null(env->isolate())).FromJust());
-  process->Set(env->events_string(), events_obj);
+  Local<Map> events_map = Map::New(env->isolate());
+  process->Set(env->context(), env->events_string(), events_map).FromJust();
 }
 
 
