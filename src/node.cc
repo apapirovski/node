@@ -804,7 +804,7 @@ bool DomainsStackHasErrorHandler(const Environment* env) {
         env->context(), OneByteString(env->isolate(),
                                       "_hasErrorListener")).ToLocalChecked();
 
-    if (has_error_handler->BooleanValue())
+    if (has_error_handler->IsTrue())
       return true;
   }
 
@@ -2426,9 +2426,8 @@ void FatalException(Isolate* isolate,
     };
 
     // this will return true if the JS layer handled it, false otherwise
-    Local<Value> caught = fatal_exception_function->Call(process_object,
-                                                         2,
-                                                         argv);
+    Local<Value> caught = fatal_exception_function->Call(
+        env->context(), process_object, 2, argv).FromMaybe(Local<Value>());
 
     if (fatal_try_catch.HasCaught()) {
       // the fatal exception function threw, so we must exit
@@ -2460,6 +2459,18 @@ void FatalException(Isolate* isolate,
                    try_catch.Exception(),
                    try_catch.Message(),
                    should_catch);
+  }
+}
+
+
+void FatalException(Isolate* isolate,
+                    const TryCatch& try_catch) {
+  HandleScope scope(isolate);
+  if (!try_catch.IsVerbose()) {
+    FatalException(isolate,
+                   try_catch.Exception(),
+                   try_catch.Message(),
+                   true);
   }
 }
 
