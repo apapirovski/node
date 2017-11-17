@@ -350,7 +350,8 @@ NODE_DEPRECATED("Use ParseEncoding(isolate, ...)",
 })
 
 NODE_EXTERN void FatalException(v8::Isolate* isolate,
-                                const v8::TryCatch& try_catch);
+                                const v8::TryCatch& try_catch,
+                                bool should_catch = true);
 
 NODE_DEPRECATED("Use FatalException(isolate, ...)",
                 inline void FatalException(const v8::TryCatch& try_catch) {
