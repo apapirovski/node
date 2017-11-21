@@ -9,11 +9,16 @@ const bench = common.createBenchmark(main, {
 });
 
 function main(conf) {
-  const n = conf.n | 0;
+  var n = conf.n | 0;
   const argc = conf.argc | 0;
   const listeners = Math.max(conf.listeners | 0, 1);
 
   const ee = new EventEmitter();
+
+  if (listeners === 1)
+    n *= 10;
+  else if (listeners === 5)
+    n *= 2;
 
   for (var k = 0; k < listeners; k += 1)
     ee.on('dummy', function() {});
