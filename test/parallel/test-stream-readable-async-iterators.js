@@ -8,6 +8,37 @@ common.crashOnUnhandledRejection();
 
 async function tests () {
   await (async function() {
+    console.log('read without for..await');
+    const max = 5;
+    let readed = 0;
+    let received = 0;
+    const readable = new Readable({
+      objectMode: true,
+      read() {}
+    });
+
+    const iter = readable[Symbol.asyncIterator]();
+    const values = [];
+    for (var i = 0; i < max; i++) {
+      values.push(iter.next());
+    }
+    Promise.all(values).then(common.mustCall((values) => {
+      values.forEach(common.mustCall(
+        item => assert.strictEqual(item.value, 'hello'), 5));
+    }));
+
+    readable.push('hello');
+    readable.push('hello');
+    readable.push('hello');
+    readable.push('hello');
+    readable.push('hello');
+    readable.push(null);
+
+    const last = await iter.next();
+    assert.strictEqual(last.done, true);
+  })();
+
+  await (async function() {
     console.log('read object mode');
     const max = 42;
     let readed = 0;
