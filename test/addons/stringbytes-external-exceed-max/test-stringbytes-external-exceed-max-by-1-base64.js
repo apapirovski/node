@@ -12,6 +12,10 @@ const assert = require('assert');
 // v8::String::kMaxLength defined in v8.h
 const kStringMaxLength = process.binding('buffer').kStringMaxLength;
 
+// Ensure we have enough memory available for future allocations to succeed.
+if (!binding.ensureAllocation(2 * kStringMaxLength))
+  common.skip(skipMessage);
+
 let buf;
 try {
   buf = Buffer.allocUnsafe(kStringMaxLength + 1);
@@ -20,10 +24,6 @@ try {
   if (e.message !== 'Array buffer allocation failed') throw (e);
   common.skip(skipMessage);
 }
-
-// Ensure we have enough memory available for future allocations to succeed.
-if (!binding.ensureAllocation(2 * kStringMaxLength))
-  common.skip(skipMessage);
 
 assert.throws(function() {
   buf.toString('base64');
